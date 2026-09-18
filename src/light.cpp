@@ -116,8 +116,9 @@ void getLight(double* tColor, Autonoma* aut, const Vector &point, const Vector &
       Vector ra = t->data->center-point;
       ShapeNode* shapeIter = aut->listStart;
       bool hit = false;
+      Ray ray(point+ra*.01, ra);
       while(!hit && shapeIter!=NULL){
-        hit = shapeIter->data->getLightIntersection(Ray(point+ra*.01, ra), lightColor);
+        hit = shapeIter->data->getLightIntersection(ray, lightColor);
          shapeIter = shapeIter->next;
       }
       double perc = (norm.dot(ra)/(ra.mag()*norm.mag()));
