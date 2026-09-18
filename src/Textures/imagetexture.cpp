@@ -84,7 +84,7 @@ int x,y;
       }          
 }
 
-void ImageTexture::maskImage(ColorTexture b, unsigned char m){
+void ImageTexture::maskImage(const ColorTexture &b, unsigned char m){
 int x,y;
    for(y = h-1; y>=0; y--)
       for(x = 0; x<w; x++){
@@ -94,7 +94,7 @@ int x,y;
          }
       }          
 }
-void ImageTexture::maskImage(ColorTexture b){
+void ImageTexture::maskImage(const ColorTexture &b){
 int x,y;
    for(y = h-1; y>=0; y--)
       for(x = 0; x<w; x++){

@@ -20,8 +20,8 @@ public:
    void maskImage(unsigned char r, unsigned char g, unsigned char b, unsigned char m);
       void maskImageU(unsigned char r, unsigned char g, unsigned char b, unsigned char m);
       void maskImageA(unsigned char r, unsigned char g, unsigned char b, unsigned char m);
-   void maskImage(ColorTexture b);
-   void maskImage(ColorTexture b, unsigned char m);
+   void maskImage(const ColorTexture &b);
+   void maskImage(const ColorTexture &b, unsigned char m);
    void maskImage(ColorTexture* b);
    void maskImage(ColorTexture* b, unsigned char m);
    void maskImageAlpha();
