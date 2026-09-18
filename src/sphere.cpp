@@ -5,7 +5,7 @@ Sphere::Sphere(const Vector &c, Texture* t, double ya, double pi, double ro, dou
   normalMap = NULL;
    radius = rad;
 }
-bool Sphere::getLightIntersection(Ray ray, double* fill){
+bool Sphere::getLightIntersection(const Ray &ray, double* fill){
    const double A = ray.vector.mag2();
    const double B = 2*ray.vector.dot(ray.point-center);
    const double C = (ray.point-center).mag2()-radius*radius;
@@ -29,7 +29,7 @@ bool Sphere::getLightIntersection(Ray ray, double* fill){
    fill[2]*=temp[2]/255.;
    return false;
 }
-double Sphere::getIntersection(Ray ray){
+double Sphere::getIntersection(const Ray &ray){
    const double A = ray.vector.mag2();
    const double B = 2*ray.vector.dot(ray.point-center);
    const double C = (ray.point-center).mag2()-radius*radius;
@@ -47,12 +47,12 @@ void Sphere::move(){
 }
 unsigned char Sphere::reversible(){return 0;}
 
-void Sphere::getColor(unsigned char* toFill, double* amb, double* op, double* ref, Autonoma* r, Ray ray, unsigned int depth){
+void Sphere::getColor(unsigned char* toFill, double* amb, double* op, double* ref, Autonoma* r, const Ray &ray, unsigned int depth){
    double data3 = (center.y-ray.point.y+radius)/(2*radius);
    double data2 = atan2( ray.point.z-center.z, ray.point.x-center.x);
    texture->getColor(toFill, amb, op, ref,fix((yaw+data2)/M_TWO_PI/textureX),fix((pitch/M_TWO_PI-(data3))/textureY));
 }
-Vector Sphere::getNormal(Vector point){
+Vector Sphere::getNormal(const Vector &point){
    Vector vect = point-center;
 /*   A x B = <x, y, z>
 <ay bz- az by,  bz ax - az bx, ax by - bx ay>

@@ -39,6 +39,6 @@ public:
    void removeLight(LightNode* s);
 };
 
-void getLight(double* toFill, Autonoma* aut, Vector point, Vector norm, unsigned char r);
+void getLight(double* toFill, Autonoma* aut, const Vector &point, const Vector &norm, unsigned char r);
 
 #endif

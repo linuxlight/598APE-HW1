@@ -105,7 +105,7 @@ void Autonoma::removeLight(LightNode* s){
    free(s);
 }
 
-void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned char flip){
+void getLight(double* tColor, Autonoma* aut, const Vector &point, const Vector &norm, unsigned char flip){
    tColor[0] = tColor[1] = tColor[2] = 0.;
    LightNode *t = aut->lightStart;
    while(t!=NULL){

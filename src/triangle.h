@@ -6,8 +6,8 @@ class Triangle : public Plane{
 public:
    double thirdX;
    Triangle(Vector c, Vector b, Vector a, Texture* t);
-   double getIntersection(Ray ray);
-   bool getLightIntersection(Ray ray, double* fill);
+   double getIntersection(const Ray &ray) override;
+   bool getLightIntersection(const Ray &ray, double* fill) override;
 };
 
 #endif
