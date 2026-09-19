@@ -6,7 +6,7 @@
 class Plane : public Shape{
 public:
   Vector vect, right, up;
-  double d;
+  double d, denom;
   Plane(const Vector &c, Texture* t, double ya, double pi, double ro, double tx, double ty);
   virtual double getIntersection(const Ray &ray) override;
   virtual bool getLightIntersection(const Ray &ray, double* toFill) override;
