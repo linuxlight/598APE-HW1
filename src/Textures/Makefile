@@ -3,6 +3,7 @@ copt := -c
 output :=-o 
 FLAGS := -O3 -g -Werror
 OBJ_DIR :=./
+FLAGS += -flto
 
 CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(CPP_FILES:.cpp=.obj)))
