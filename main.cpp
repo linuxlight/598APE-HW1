@@ -13,6 +13,9 @@
 #include<stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <vector>
 using namespace std;
 
 #include <sys/time.h>
@@ -45,12 +48,38 @@ void set(int i, int j, unsigned char r, unsigned char g, unsigned char b){
    DATA[3*(i+j*W)+2] = b; 
 }
 
-void refresh(Autonoma* c){
-   for(int n = 0; n<H*W; ++n) 
-   { 
-      Vector ra = c->camera.forward+((double)(n%W)/W-.5)*((c->camera.right))+(.5-(double)(n/W)/H)*((c->camera.up));
-      calcColor(&DATA[3*n], c, Ray(c->camera.focus, ra), 0);
+static const int NCPU = []{
+   cpu_set_t set;
+   if(sched_getaffinity(0, sizeof(set), &set) == 0){
+      int n = CPU_COUNT(&set);
+      if(n > 0) return n;
    }
+   unsigned h = std::thread::hardware_concurrency();
+   return h ? (int)h : 1;
+}();
+
+void refresh(Autonoma* c){
+   const int total = H*W;
+   constexpr int CHUNK = 256;
+   std::atomic<int> next{0};
+
+   auto worker = [&]{
+      int start;
+      while((start = next.fetch_add(CHUNK, std::memory_order_relaxed)) < total){
+         const int end = std::min(start + CHUNK, total);
+         for(int n = start; n < end; ++n)
+         { 
+            Vector ra = c->camera.forward+((double)(n%W)/W-.5)*((c->camera.right))+(.5-(double)(n/W)/H)*((c->camera.up));
+            calcColor(&DATA[3*n], c, Ray(c->camera.focus, ra), 0);
+         }
+      }
+   };
+
+   std::vector<std::thread> pool;
+   pool.reserve(NCPU-1);
+   for(int t = 0; t < NCPU-1; ++t) pool.emplace_back(worker);
+   worker();                        // main thread takes a share too
+   for(auto& th : pool) th.join();
 }
 
 void outputPPM(FILE* f){
