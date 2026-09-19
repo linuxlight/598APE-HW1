@@ -121,8 +121,8 @@ void getLight(double* tColor, Autonoma* aut, const Vector &point, const Vector &
         hit = shapeIter->data->getLightIntersection(ray, lightColor);
          shapeIter = shapeIter->next;
       }
-      double perc = (norm.dot(ra)/(ra.mag()*norm.mag()));
       if(!hit){
+      double perc = (norm.dot(ra)/(ra.mag()*norm.mag()));
       if(flip && perc<0) perc=-perc;
         if(perc>0){
       
