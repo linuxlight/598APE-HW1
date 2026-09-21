@@ -4,7 +4,7 @@ copt := -c
 SRC_DIR := ./
 OBJ_DIR := ./
 FLAGS := -O3 -g -Werror
-FLAGS += -flto
+FLAGS += -flto -fno-omit-frame-pointer
 
 CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(CPP_FILES:.cpp=.obj)))
