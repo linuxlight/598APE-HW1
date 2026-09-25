@@ -2,7 +2,12 @@
 
 This repository contains code for homework 1 of 598APE.
 
-In particular, this repository is an implementation of a Raytracer.
+In particular, this repository is an implementation of an optimized Raytracer.
+
+Starting from the course baseline, we applied 11 optimizations 
+(compiler optimization, efficient nearest-intersection search, redundant-work removal, and multithreading)
+ that leave every output byte-identical to the baseline while running the scenes 19-21x faster
+and making the 111,748-triangle elephant renderable in seconds instead of days.
 
 To compile the program run:
 ```bash
@@ -19,6 +24,7 @@ This program assumes the following are installed on your machine:
 * make
 * ImageMagick (for importing and exporting non-ppm images)
 * FFMpeg (for exporting movies from image sequences)
+* `librsvg2-bin` (for converting flamegraph)
 
 The raytracer program here is general and can be used to generate any number of different potential scenes.
 
@@ -46,6 +52,91 @@ Total time to create images=1.334815 seconds
 We have placed timer code surrounding the main computational loop inside main.cpp. It is your goal to reduce this runtime as much as possible, while maintaining or increasing the complexity (i.e. resolution, number of frames) of the scene.
 
 Here we see that the image took 1.3 seconds to run and produced a result in `output/pianoroom.ppm`. Input and output of images is already handled by the library. In particular, the PPM format (see https://en.wikipedia.org/wiki/Netpbm for an example), represents images as text for data -- which makes it easy to input and output without the use of a library. However, as this is not the most efficient, this application uses the tool ImageMagick tool to convert to and from the PPM formats.
+
+
+## Reproducing Benchmark and Verifying the Optimizations
+
+### Performance (the numbers in the report)
+
+`eval/bench.sh` reproduces every timing in the paper. It checks out each commit,
+builds it, and runs each scene under `perf stat`, printing the program's own
+`Total time` alongside cycle/instruction counts.
+
+```bash
+sudo sysctl kernel.perf_event_paranoid=1     # allow perf to count (resets on reboot)
+eval/bench.sh 2>&1 | tee bench.log           # ~2h at REPS=5
+REPS=3 eval/bench.sh                         # faster, slightly noisier
+```
+
+Baseline timings for the sphere and elephant are extrapolated from small frames,
+because a full baseline render takes hours to days.
+
+### Correctness (byte-identical output)
+
+`bench.sh` byte-compares each commit's pianoroom output against the baseline:
+
+```bash
+# what bench.sh does, per commit:
+cmp bench_out/piano_base.ppm bench_out/piano_<commit>.ppm
+```
+
+All 11 shipped commits produce output identical to baseline (`19bbc81`).
+
+### Flame graphs
+
+```bash
+git submodule update --init             # fetches eval/FlameGraph
+eval/pianoroom.sh                       # optimized pianoroom flame graph
+eval/pianoroom_base.sh                  # baseline pianoroom flame graph
+eval/realelephant.sh                    # optimized elephant flame graph
+eval/realelephant_base.sh               # baseline elephant flame graph (tiny frame)
+```
+
+## Optimizations and How to Evaluate Individually
+
+Each optimization is a single commit on top of the baseline. To measure one in
+isolation, time the commit against its parent:
+
+```bash
+git checkout <commit>   && make clean && make -j    # optimized
+git checkout <commit>~1 && make clean && make -j    # just before it
+```
+
+| # | Commit | Optimization |
+|---|---|---|
+| 0 | `19bbc81` | Baseline |
+| 1 | `8c6b259` | Build at `-O3` instead of `-O0` |
+| 2 | `f193627` | `Box::getIntersection`: check `time==inf` before `solveScalers` |
+| 3 | `e2e6c3a` | Pass `Ray`/`Vector` by `const&` |
+| 4 | `66fd713` | Hoist shadow-ray construction out of the `getLight` loop |
+| 5 | `c1c40fc` | Pass textures by `const&` (no measurable effect) |
+| 6 | `de0e21f` | `calcColor`: $O(N^2)$ grow-and-copy to $O(N)$ linear min scan |
+| 7 | `79cdff5` | Enable `-flto` in all three Makefiles |
+| 8 | `c936c54` | `getLight`: compute magnitude only when lit (no measurable effect) |
+| 9 | `b12f292` | `calcColor`: fewer `sqrt` calls when normalizing |
+| 10 | `381e77e` | `fix()`: replace `fmod(a,1.0)` with `a - floor(a)` |
+| 11 | `c5d6565` | Parallelize the pixel loop in `refresh()`|
+
+Notes for reproduction:
+
+- **#6 is the change that makes the mesh scenes runnable.** Before it, the elephant
+  cannot be rendered in reasonable time, so evaluate #1–#5 on pianoroom and globe.
+- **#7 (`-flto`)** requires a clean rebuild (`make clean && make -j`); a partial
+  rebuild will not relink with LTO.
+- `inputs/realelephant.ray` was added after the baseline (commit `42b22ba`). To time
+  the elephant on `19bbc81`, copy it in first:
+  `git show c5d6565:inputs/realelephant.ray > /tmp/realelephant.ray`.
+
+### Optimizations that did not help
+
+Caching the `solveScalers` denominator (commit `f0389f0`, reverted in `cd4768f`)
+This was scene-dependent and reproduced net negative. 
+The denominator cache can be re-measured with:
+
+```bash
+git checkout f0389f0~1 && make clean && make -j   # before the cache
+git checkout f0389f0   && make clean && make -j   # with the cache
+```
 
 ## Input Programs
 This project contains three (arguably four) input programs for you to optimize.
